@@ -10,6 +10,10 @@ import java.util.List;
 
 @Component
 public class ReplyKeyboardMaker {
+
+    public ReplyKeyboardMaker() {
+    }
+
     public ReplyKeyboardMarkup getMainMenuKeyboard() {
         KeyboardRow row1 = new KeyboardRow();
         row1.add(new KeyboardButton("Я котик чипи чипи"));

@@ -10,6 +10,9 @@ import java.util.List;
 @Component
 public class InlineKeyboardMaker {
 
+    public InlineKeyboardMaker() {
+    }
+
     public InlineKeyboardMarkup getGradeKeyboard() {
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
         List<InlineKeyboardButton> keyboardButtonsRow1 = new ArrayList<>();

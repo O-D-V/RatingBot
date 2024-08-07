@@ -2,8 +2,9 @@
 <Configuration status="info">
     <Appenders>
 
-        <Console name="STDOUT">
-            <PatternLayout pattern="%d{MM-dd-yyyy} %logger{3} %-5level - %msg%throwable{1}%n" />
+        <Console name="console">
+            <PatternLayout disableAnsi="false" pattern="%highlight{%-5level}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue} %d{MM-dd-yyyy} %-50logger{3} - %style{%msg}{cyan} %style{%throwable{1}}{red}%n" />
+<!--            %highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue} %style{${sys:PID}}{magenta} [%15.15t] %style{%-40.40C{1.}}{cyan}-->
         </Console>
 
         <RollingFile name="roll-by-time"
@@ -11,17 +12,22 @@
                      filePattern="logs/log.%d{MM-dd-yyyy}.log.gz"
                      ignoreExceptions="false">
             <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} %logger{36} %p %m %throwable{1}%n</Pattern>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} %p %logger{36} %m %throwable{1}%n</Pattern>
             </PatternLayout>
             <TimeBasedTriggeringPolicy />
+<!-- Создается новый файл логгирования при достижении указанного размера            <SizeBasedTriggeringPolicy size="10 MB"/>-->
+<!-- Перезаписываются существующие файлы           <DefaultRolloverStrategy max="10"/>-->
         </RollingFile>
 
     </Appenders>
     <Loggers>
-            <Root level="info">
-                <AppenderRef ref="roll-by-time"/>
-                <AppenderRef ref="STDOUT"/>
-            </Root>
+        <Logger name="ru.AliceTelegramBot" level="info" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <Root level="info">
+            <AppenderRef ref="roll-by-time"/>
+            <AppenderRef ref="console"/>
+        </Root>
     </Loggers>
 </Configuration>
 
