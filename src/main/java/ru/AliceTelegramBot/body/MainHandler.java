@@ -59,7 +59,6 @@ public class MainHandler extends TelegramLongPollingBot {
         this.textMessageHandler = textMessageHandler;
         this.userPhotoGradeService = userPhotoGradeService;
         this.tempUserData = tempUserData;
-        logger.info("AAAAAAAAAAAAAAAA");
     }
 
     @Override
@@ -77,16 +76,15 @@ public class MainHandler extends TelegramLongPollingBot {
         String currency = "";
         Long chatId = update.getMessage().getChatId();
 
-        logger.info("receive message from " + chatId);
-
+        logger.debug("receive message from " + chatId + ":" + (update.getMessage().hasText()?update.getMessage().getText():"Not a text"));
         //TODO Добавить чтобы тут получался юзер и поставлялся в остальные методы. Чтобы не обращаться каждый раз к БД
 
         //Authentication user
-        authenticateUser(update);
+        User user = authenticateUser(update);
 
         if(update.hasMessage()){
             if(update.getMessage().hasText()) {
-                List<BotApiMethodContainer> methods = textMessageHandler.processTextMessage(update);
+                List<BotApiMethodContainer> methods = textMessageHandler.processTextMessage(update, user);
                 for(BotApiMethodContainer botMethodContainer : methods) {
                     try {
                         if(botMethodContainer.isSendPhotoMethod()) execute(botMethodContainer.getSendPhotoMethod());
@@ -97,10 +95,10 @@ public class MainHandler extends TelegramLongPollingBot {
                 }
             }
             if(update.getMessage().hasPhoto()){
-                handlePhoto(update);
+                handlePhoto(update, user);
             }
         }else if(update.hasCallbackQuery()){
-            List<BotApiMethod<?>> methodsList =  callbackQueryHandler.processCallbackQuery(update.getCallbackQuery());
+            List<BotApiMethod<?>> methodsList =  callbackQueryHandler.processCallbackQuery(update.getCallbackQuery(), user);
             for(BotApiMethod<?> method : methodsList) {
                 try {
                     execute(method);
@@ -132,7 +130,7 @@ public class MainHandler extends TelegramLongPollingBot {
         }
     }
 
-    private void authenticateUser(Update update){
+    private User authenticateUser(Update update){
         Long chatId = update.getMessage().getChatId();
         User user = userPhotoGradeService.getUserByID(chatId);
         if (user == null) {
@@ -142,25 +140,28 @@ public class MainHandler extends TelegramLongPollingBot {
             user.setUserID(chatId);
             userPhotoGradeService.saveUser(user);
         }
+        return user;
     }
 
-    private void handlePhoto(Update update){
+    private void handlePhoto(Update update, User user){
         Long chatId = update.getMessage().getChatId();
-        User user = userPhotoGradeService.getUserByID(chatId);
-        if (Objects.equals(userPhotoGradeService.getUserByID(chatId).getLastMessage(), "/newPhoto")) {
+        if (Objects.equals(user.getLastMessage(), "/newPhoto")) {
             //Обрабатываем новое фото(скачиваем, добавляем в БД)
             logger.info("Downloading photo from " + chatId);
             List<PhotoSize> photos = update.getMessage().getPhoto();
+            Long photoCount = userPhotoGradeService.countPhotos()+1;
+
             //photoName добавлять во временный объект и там обновлять после отправки нормальной подписи
-            String photoName = tempUserData.getPhotoNameByUserID(chatId) == null? tempUserData.getPhotoNameByUserID(chatId) + ".png":"photo" + (userPhotoGradeService.countPhotos()+1) + ".png";
+            String photoName = tempUserData.getPhotoNameByUserID(chatId) == null? tempUserData.getPhotoNameByUserID(chatId) + ".png":"photo" + photoCount +".png";
             downloadPhoto(photos.get(photos.size() - 1), "photo/" + photoName);
             tempUserData.setPhotoUrl(chatId, "photo/" + photoName);
             SendMessage sendMessage;
-            if(isPhotoObjectCompleted(chatId.toString())){
-                savePhoto(chatId.toString());
-                sendMessage = new SendMessage(String.valueOf(chatId), "Добавлено");
-            }
-            else sendMessage = new SendMessage(String.valueOf(chatId), "Отправьте название фото");
+            savePhoto(chatId.toString());
+            user.setLastMessage("null");
+            userPhotoGradeService.updateUser(chatId, user);
+            sendMessage = new SendMessage(String.valueOf(chatId), "Добавлено");
+            logger.debug("Photo saved with name " + photoName);
+
             try {
                 execute(sendMessage);
             } catch (TelegramApiException e) {

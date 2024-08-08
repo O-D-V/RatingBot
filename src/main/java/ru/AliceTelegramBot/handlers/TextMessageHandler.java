@@ -1,11 +1,14 @@
 package ru.AliceTelegramBot.handlers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import ru.AliceTelegramBot.body.MainHandler;
 import ru.AliceTelegramBot.models.Photo;
 import ru.AliceTelegramBot.models.User;
 import ru.AliceTelegramBot.services.UserPhotoGradeService;
@@ -24,6 +27,7 @@ import java.util.List;
 public class TextMessageHandler {
     private final UserPhotoGradeService userPhotoGradeService;
     private  final TempUserData tempUserData;
+    Logger logger = LoggerFactory.getLogger(TextMessageHandler.class);
 
     @Autowired
     public TextMessageHandler(UserPhotoGradeService userPhotoGradeService, TempUserData tempUserData) {
@@ -31,7 +35,7 @@ public class TextMessageHandler {
         this.tempUserData = tempUserData;
     }
 
-    public List<BotApiMethodContainer> processTextMessage(Update update){
+    public List<BotApiMethodContainer> processTextMessage(Update update, User user){
         final Long chatId = update.getMessage().getChatId();
         final String messageText = update.getMessage().getText();
 
@@ -43,15 +47,13 @@ public class TextMessageHandler {
                return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), "Photo", "photo//HelloKitty.jpg")));
 
             case "/newPhoto": {
-                //
-                User user = userPhotoGradeService.getUserByID(chatId);
+                //Запрос на создание нового фото
                 user.setLastMessage("/newPhoto");
                 userPhotoGradeService.updateUser(chatId, user);
-                return sendMessage(chatId.toString(), "Запрос принят. Отправьте фото и подпись к фото");
+                return sendMessage(chatId.toString(), "Запрос принят. Отправьте подпись к фото");
             }
             case "/showPhoto": {
                 //
-                User user = userPhotoGradeService.getUserByID(chatId);
                 user.setLastMessage("/showPhoto");
                 userPhotoGradeService.updateUser(chatId, user);
             }
@@ -66,16 +68,14 @@ public class TextMessageHandler {
                 return sendMessage(chatId.toString(), res.toString());
             }
             default:
-                switch (userPhotoGradeService.getUserByID(chatId).getLastMessage()){
+                switch (user.getLastMessage()){
                     case "/newPhoto":
                     {
                         //Обрабатывается подпись к новому фото.
                         savePhotoName(chatId.toString(),messageText);
-                        if(isPhotoObjectCompleted(chatId.toString())){
-                            savePhoto(chatId.toString());
-                            return  sendMessage(chatId.toString(), "Добавлено");
-                        }
-                        else return  sendMessage(chatId.toString(), "Отправьте фото");
+                        logger.debug("Title is saved");
+                        return  sendMessage(chatId.toString(), "Отправьте фото");
+
                     }
                     case"/showPhoto":
                         //Отправляет фото с отправленным пользователем именем

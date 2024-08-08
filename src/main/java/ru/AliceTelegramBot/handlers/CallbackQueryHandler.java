@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import ru.AliceTelegramBot.keyboards.InlineKeyboardMaker;
+import ru.AliceTelegramBot.models.User;
 
 import java.util.*;
 
@@ -21,7 +22,7 @@ public class CallbackQueryHandler {
 
 
 
-    public List<BotApiMethod<?>> processCallbackQuery(CallbackQuery buttonQuery){
+    public List<BotApiMethod<?>> processCallbackQuery(CallbackQuery buttonQuery, User user){
         final String chatId = buttonQuery.getMessage().getChatId().toString();
 
         String data = buttonQuery.getData();

@@ -1,9 +1,10 @@
+<!--Пишет в файл info и в консоль debug-->
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="info">
     <Appenders>
 
         <Console name="console">
-            <PatternLayout disableAnsi="false" pattern="%highlight{%-5level}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue} %d{MM-dd-yyyy} %-50logger{3} - %style{%msg}{cyan} %style{%throwable{1}}{red}%n" />
+            <PatternLayout disableAnsi="false" pattern="%highlight{%-5level}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=blue, TRACE=blue} %d{MM-dd-yyyy} %-50logger{3} - %style{%msg}{cyan} %style{%throwable{1}}{red}%n" />
 <!--            %highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue} %style{${sys:PID}}{magenta} [%15.15t] %style{%-40.40C{1.}}{cyan}-->
         </Console>
 
@@ -21,12 +22,14 @@
 
     </Appenders>
     <Loggers>
-        <Logger name="ru.AliceTelegramBot" level="info" additivity="false">
+        <Logger name="ru.AliceTelegramBot" level="debug" additivity="false">
             <AppenderRef ref="console"/>
+            <AppenderRef ref="roll-by-time" level="info"/>
         </Logger>
+
         <Root level="info">
             <AppenderRef ref="roll-by-time"/>
-            <AppenderRef ref="console"/>
+          <AppenderRef ref="console"/>
         </Root>
     </Loggers>
 </Configuration>
