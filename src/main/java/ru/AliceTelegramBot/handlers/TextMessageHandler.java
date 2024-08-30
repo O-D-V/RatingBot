@@ -53,17 +53,17 @@ public class TextMessageHandler {
                 return sendMessage(chatId.toString(), "Запрос принят. Отправьте подпись к фото");
             }
             case "/showPhoto": {
-                //
+                //отправляет фото по подписи
                 user.setLastMessage("/showPhoto");
                 userPhotoGradeService.updateUser(chatId, user);
+                return  sendMessage(chatId.toString(), "Введите подпись");
             }
-                break;
             case "/showPhotoNames":
             {
-                //отправляет в ответе список имен фото
+                //отправляет в ответе список подписей фото
                 StringBuilder res = new StringBuilder();
                 List<String> list = userPhotoGradeService.getPhotosNames();
-                for(String l:list) res.append(l).append("/n");
+                for(String l:list) res.append(l).append("\n");
                 if(res.isEmpty()) res.append("Ничего не найдено");
                 return sendMessage(chatId.toString(), res.toString());
             }
@@ -78,19 +78,19 @@ public class TextMessageHandler {
 
                     }
                     case"/showPhoto":
-                        //Отправляет фото с отправленным пользователем именем
+                        //Возвращает пользователю фото с отправленной ранее подписью
                         Photo photo = userPhotoGradeService.getPhotoByName(messageText);
-                        if(photo == null) return  sendMessage(chatId.toString(), "Нет фото с таким именем");
+                        if(photo == null) return  sendMessage(chatId.toString(), "Нет фото с такой подписью");
                         return Collections.singletonList(new BotApiMethodContainer(sendPhoto(Long.toString(chatId), photo.getName(), photo.getUrl())));
                 }
 
                 return  sendMessage(chatId.toString(), Constants.NO_SUCH_COMMAND_ERROR);
         }
-        return  sendMessage(chatId.toString(), Constants.SUCCESS_MESSAGE);
+        //return  sendMessage(chatId.toString(), Constants.SUCCESS_MESSAGE);
     }
 
     private void savePhotoName(String userId, String photoName){
-        tempUserData.setPhotoNameForUser(Long.getLong(userId), photoName);
+        tempUserData.setPhotoNameForUser(Long.parseLong(userId), photoName);
     }
 
     //Сохраняет подпись и путь к фото

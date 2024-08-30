@@ -25,22 +25,24 @@ import java.util.List;
 import java.util.Objects;
 
 /*
-*TODO
+*
 * Админ добавляет фото (/addPhoto)
 * -устанавливаем пользователю последнее сообщение = /addPhoto
 * -запрашиваем фото и подпись
 *
-* TODO
+*
 *  Админ отправляет подпись:
 * -добаляем подпись во временный объект
 * -проверяем не заполнен ли объект для добавления фото в БД
 *
-* TODO
+*
 *  Админ отправляет фото:
 * -скачиваем фото
 * -добавляем путь во временный объект
 * -проверяем заполнен ли временный объект для добавления в БД
 * */
+
+//TODO Добавить возможность создания оценок
 
 @Component
 public class MainHandler extends TelegramLongPollingBot {
@@ -109,8 +111,9 @@ public class MainHandler extends TelegramLongPollingBot {
         }
     }
 
-    private void savePhoto(String userID){
-        Photo photo = new Photo(tempUserData.getPhotoUrlByUserID(Long.getLong(userID)), 0F, tempUserData.getPhotoNameByUserID(Long.getLong(userID)), null);
+    private void savePhoto(Long userID){
+        logger.debug("URL:" + tempUserData.getPhotoUrlByUserID(userID) + " Name:" + tempUserData.getPhotoNameByUserID(userID));
+        Photo photo = new Photo(tempUserData.getPhotoUrlByUserID(userID), 0F, tempUserData.getPhotoNameByUserID(userID), null);
         userPhotoGradeService.savePhoto(photo);
     }
 
@@ -134,32 +137,39 @@ public class MainHandler extends TelegramLongPollingBot {
         Long chatId = update.getMessage().getChatId();
         User user = userPhotoGradeService.getUserByID(chatId);
         if (user == null) {
-            user = new User();
-            user.setAdmin(false);
-            user.setName(update.getMessage().getChat().getFirstName());
-            user.setUserID(chatId);
-            userPhotoGradeService.saveUser(user);
+            user = saveNewUser(update);
         }
+        return user;
+    }
+
+    private User saveNewUser(Update update){
+        User user = new User();
+        user.setAdmin(false);
+        user.setName(update.getMessage().getChat().getFirstName());
+        user.setUserID(update.getMessage().getChatId());
+        userPhotoGradeService.saveUser(user);
         return user;
     }
 
     private void handlePhoto(Update update, User user){
         Long chatId = update.getMessage().getChatId();
-        if (Objects.equals(user.getLastMessage(), "/newPhoto")) {
+        if (Objects.equals(user.getLastMessage(), "/newPhoto") && tempUserData.getPhotoNameByUserID(chatId) != null) {
             //Обрабатываем новое фото(скачиваем, добавляем в БД)
             logger.info("Downloading photo from " + chatId);
             List<PhotoSize> photos = update.getMessage().getPhoto();
-            Long photoCount = userPhotoGradeService.countPhotos()+1;
 
-            //photoName добавлять во временный объект и там обновлять после отправки нормальной подписи
-            String photoName = tempUserData.getPhotoNameByUserID(chatId) == null? tempUserData.getPhotoNameByUserID(chatId) + ".png":"photo" + photoCount +".png";
+
+            String photoName = tempUserData.getPhotoNameByUserID(chatId) + ".png";
             downloadPhoto(photos.get(photos.size() - 1), "photo/" + photoName);
             tempUserData.setPhotoUrl(chatId, "photo/" + photoName);
             SendMessage sendMessage;
-            savePhoto(chatId.toString());
+
+            savePhoto(chatId);
+
             user.setLastMessage("null");
             userPhotoGradeService.updateUser(chatId, user);
             sendMessage = new SendMessage(String.valueOf(chatId), "Добавлено");
+
             logger.debug("Photo saved with name " + photoName);
 
             try {
@@ -167,7 +177,12 @@ public class MainHandler extends TelegramLongPollingBot {
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
-        }
+        }else{
+            try {
+                execute(new SendMessage(String.valueOf(chatId), "Введите сначала подпись к фото"));
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }}
     }
 
 }

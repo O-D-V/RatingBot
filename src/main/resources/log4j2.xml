@@ -1,8 +1,7 @@
-<!--Пишет в файл info и в консоль debug-->
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="info">
     <Appenders>
-
+        <!--Пишет в файл info и в консоль debug-->
         <Console name="console">
             <PatternLayout disableAnsi="false" pattern="%highlight{%-5level}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=blue, TRACE=blue} %d{MM-dd-yyyy} %-50logger{3} - %style{%msg}{cyan} %style{%throwable{1}}{red}%n" />
 <!--            %highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue} %style{${sys:PID}}{magenta} [%15.15t] %style{%-40.40C{1.}}{cyan}-->

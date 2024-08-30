@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @Component
 public class TempUserData {
@@ -18,6 +19,12 @@ public class TempUserData {
 
     public String getPhotoNameByUserID(Long userID) {
         return photoName.get(userID);
+    }
+
+    public List<String> getAllPhotoNames(){
+        if(photoName.isEmpty()) return null;
+        photoName.forEach((key, value) -> System.out.println(key + " : " +value));
+        return photoName.keySet().stream().map(Object::toString).toList();
     }
 
     public void setPhotoNameForUser(Long userID, String photoName) {
