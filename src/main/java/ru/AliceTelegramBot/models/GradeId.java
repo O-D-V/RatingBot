@@ -7,32 +7,39 @@ import java.util.Objects;
 
 @Embeddable
 public class GradeId implements Serializable {
-    private Long photoID;
 
-    private Long userID;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("photoId")
+    @JoinColumn(name = "photo_id", referencedColumnName = "id")
+    private Photo photo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id")
+    private User user;
 
     public GradeId() {
     }
 
-    public GradeId(Long photoID, Long userID) {
-        this.photoID = photoID;
-        this.userID = userID;
+    public GradeId(Photo photo, User user) {
+        this.photo = photo;
+        this.user = user;
     }
 
-    public Long getPhotoID() {
-        return photoID;
+    public Photo getPhoto() {
+        return photo;
     }
 
-    public void setPhotoID(Long photoID) {
-        this.photoID = photoID;
+    public void setPhoto(Photo photo) {
+        this.photo = photo;
     }
 
-    public Long getUserID() {
-        return userID;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserID(Long userID) {
-        this.userID = userID;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @Override
@@ -40,11 +47,11 @@ public class GradeId implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GradeId gradeId = (GradeId) o;
-        return Objects.equals(photoID, gradeId.photoID) && Objects.equals(userID, gradeId.userID);
+        return Objects.equals(photo, gradeId.photo) && Objects.equals(user, gradeId.user);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(photoID, userID);
+        return Objects.hash(photo, user);
     }
 }

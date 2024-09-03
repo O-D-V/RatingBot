@@ -23,7 +23,7 @@ public class User {
     @Column(name = "is_admin")
     private Boolean isAdmin;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "pk.user")
     private List<Grade> grades;
 
     public User() {

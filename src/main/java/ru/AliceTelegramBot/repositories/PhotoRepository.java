@@ -13,5 +13,11 @@ public interface PhotoRepository extends JpaRepository<Photo, Integer> {
     @Query("select p.name from Photo p")
     List<String> getAllNames();
 
+    //select id from photo where id not in (select photo_id from Grade where user_id = 1093937171)
+    @Query("select p.id from Photo p where p.id not in (select g.pk.photo.id from Grade g where g.pk.user.userID = ?1)")
+    List<Integer> getUnratedPhotosIdsForUser(int userId);
+
+    Optional<Photo> findById(int id);
+
     Optional<Photo> findByName(String name);
 }

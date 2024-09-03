@@ -28,7 +28,9 @@ public class Photo {
     @NotNull
     private Float averageRate;
 
-    @OneToMany(mappedBy = "photo")
+
+    //TODO Добавить cascade
+    @OneToMany(mappedBy = "pk.photo")
     private List<Grade> grades;
 
     public Photo(String url, Float averageRate) {

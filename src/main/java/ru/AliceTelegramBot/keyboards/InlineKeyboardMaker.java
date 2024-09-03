@@ -13,7 +13,7 @@ public class InlineKeyboardMaker {
     public InlineKeyboardMaker() {
     }
 
-    public InlineKeyboardMarkup getGradeKeyboard() {
+    public InlineKeyboardMarkup gradeKeyboard() {
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
         List<InlineKeyboardButton> keyboardButtonsRow1 = new ArrayList<>();
         for(int i = 1; i < 6; i++) {

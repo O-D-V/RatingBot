@@ -5,16 +5,17 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
 @Table(name = "grade")
-public class Grade {
+public class Grade implements Serializable  {
 
     @EmbeddedId
-    private GradeId id;
+    private GradeId pk;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    /*@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("photoId")
     @JoinColumn(name = "photo_id", referencedColumnName = "id")
     private Photo photo;
@@ -22,8 +23,7 @@ public class Grade {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
-
-    private User user;
+    private User user;*/
 
     @Min(value = 1)
     @Max(value = 10)
@@ -35,33 +35,18 @@ public class Grade {
     }
 
     public Grade(Integer value, User user, Photo photo) {
-        this.photo = photo;
-        this.user = user;
         this.value = value;
+        this.pk = new GradeId();
+        pk.setPhoto(photo);
+        pk.setUser(user);
     }
 
-    public GradeId getId() {
-        return id;
+    public GradeId getPk() {
+        return pk;
     }
 
-    public void setId(GradeId id) {
-        this.id = id;
-    }
-
-    public Photo getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(Photo photo) {
-        this.photo = photo;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
+    public void setPk(GradeId pk) {
+        this.pk = pk;
     }
 
     public @Min(value = 1) @Max(value = 10) @NotNull Integer getValue() {
@@ -77,20 +62,18 @@ public class Grade {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Grade grade = (Grade) o;
-        return Objects.equals(id, grade.id) && Objects.equals(value, grade.value);
+        return Objects.equals(pk, grade.pk) && Objects.equals(value, grade.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, value);
+        return Objects.hash(pk, value);
     }
 
     @Override
     public String toString() {
         return "Grade{" +
-                "id=" + id +
-                ", photo=" + photo +
-                ", user=" + user +
+                "pk=" + pk +
                 ", value=" + value +
                 '}';
     }

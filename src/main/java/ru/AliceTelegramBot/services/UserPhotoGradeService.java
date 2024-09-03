@@ -28,13 +28,30 @@ public class UserPhotoGradeService {
 
     @Transactional
     public void saveGrade(Grade grade){
+        System.out.println("До save");
+        System.out.println(grade);
         gradeRepository.save(grade);
+        System.out.println("После save");
+        refreshAveragePhotoRate(Math.toIntExact(grade.getPk().getPhoto().getId()));
     }
+
 
     @Transactional
     public void saveGrade(Photo photo, User user, int rate){
-        Grade grade = new Grade(rate, user,photo);
-        gradeRepository.save(grade);
+        saveGrade(new Grade(rate, user,photo));
+
+    }
+
+    @Transactional
+    public void refreshAveragePhotoRate(Integer photoID){
+        Photo photo = photoRepository.findById(photoID).orElse(null);
+        if (photo == null) {
+            throw  new NullPointerException();
+        }
+        List<Integer> values = gradeRepository.findAllByPhoto(photoID);
+        float average = (float) values.stream().mapToInt(Integer::intValue).sum() / values.size();
+        photo.setAverageRate(average);
+        photoRepository.save(photo);
     }
 
     @Transactional
@@ -54,7 +71,7 @@ public class UserPhotoGradeService {
     }
 
     public List<Grade> getGradesByUser(User user){
-        return gradeRepository.findByUser(user);
+        return gradeRepository.findByPkUser(user);
     }
 
     public User getUserByID(Long id){
@@ -63,6 +80,16 @@ public class UserPhotoGradeService {
 
     public Photo getPhotoByName(String name){
         return photoRepository.findByName(name).orElse(null);
+    }
+
+    public Photo getRandomUnratedPhotoForUser(int userId){
+        List<Integer> list =  photoRepository.getUnratedPhotosIdsForUser(userId);
+        int minValue = 0;
+        int maxValue = list.size();
+        int randomId = minValue + (int) (Math.random() * (maxValue - minValue + 1));
+
+        Photo photoToRate = photoRepository.findById(list.get(randomId)).get();
+        return photoToRate;
     }
 
     public String getLastMessageByID(Long id){

@@ -8,7 +8,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import ru.AliceTelegramBot.body.MainHandler;
+import ru.AliceTelegramBot.keyboards.InlineKeyboardMaker;
 import ru.AliceTelegramBot.models.Photo;
 import ru.AliceTelegramBot.models.User;
 import ru.AliceTelegramBot.services.UserPhotoGradeService;
@@ -27,12 +30,14 @@ import java.util.List;
 public class TextMessageHandler {
     private final UserPhotoGradeService userPhotoGradeService;
     private  final TempUserData tempUserData;
+    private final InlineKeyboardMaker inlineKeyboardMaker;
     Logger logger = LoggerFactory.getLogger(TextMessageHandler.class);
 
     @Autowired
-    public TextMessageHandler(UserPhotoGradeService userPhotoGradeService, TempUserData tempUserData) {
+    public TextMessageHandler(UserPhotoGradeService userPhotoGradeService, TempUserData tempUserData, InlineKeyboardMaker inlineKeyboardMaker) {
         this.userPhotoGradeService = userPhotoGradeService;
         this.tempUserData = tempUserData;
+        this.inlineKeyboardMaker = inlineKeyboardMaker;
     }
 
     public List<BotApiMethodContainer> processTextMessage(Update update, User user){
@@ -67,21 +72,45 @@ public class TextMessageHandler {
                 if(res.isEmpty()) res.append("Ничего не найдено");
                 return sendMessage(chatId.toString(), res.toString());
             }
+            case "/createRate":
+            {
+                user.setLastMessage("/createRate");
+                userPhotoGradeService.updateUser(chatId, user);
+                return  sendMessage(chatId.toString(), "Введите подпись к фото, которое хотели бы оценить и оценку через пробел");
+            }
+            case "/ratePhoto":
+            {
+                Photo photo = userPhotoGradeService.getRandomUnratedPhotoForUser(user.getUserID().intValue());
+                return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getName(), photo.getUrl(), inlineKeyboardMaker.gradeKeyboard())));
+            }
             default:
-                switch (user.getLastMessage()){
-                    case "/newPhoto":
-                    {
+                switch (user.getLastMessage()) {
+                    case "/newPhoto": {
                         //Обрабатывается подпись к новому фото.
-                        savePhotoName(chatId.toString(),messageText);
+                        savePhotoName(chatId.toString(), messageText);
                         logger.debug("Title is saved");
-                        return  sendMessage(chatId.toString(), "Отправьте фото");
+                        return sendMessage(chatId.toString(), "Отправьте фото");
 
                     }
-                    case"/showPhoto":
+                    case "/showPhoto": {
                         //Возвращает пользователю фото с отправленной ранее подписью
                         Photo photo = userPhotoGradeService.getPhotoByName(messageText);
-                        if(photo == null) return  sendMessage(chatId.toString(), "Нет фото с такой подписью");
+                        if (photo == null) return sendMessage(chatId.toString(), "Нет фото с такой подписью");
                         return Collections.singletonList(new BotApiMethodContainer(sendPhoto(Long.toString(chatId), photo.getName(), photo.getUrl())));
+                    }
+                    case "/createRate": {
+                        String cleanMessageText = messageText.trim();
+
+                        String photoName = cleanMessageText.substring(0, cleanMessageText.indexOf(' '));
+                        String photoGrade = cleanMessageText.substring(cleanMessageText.indexOf(' ') + 1);
+
+                        Photo photo = userPhotoGradeService.getPhotoByName(photoName);
+
+                        //TODO Сделать проверку на наличие оценки
+
+                        userPhotoGradeService.saveGrade(photo, user, Integer.parseInt(photoGrade));
+                        return sendMessage(chatId.toString(), "Выполнено");
+                    }
                 }
 
                 return  sendMessage(chatId.toString(), Constants.NO_SUCH_COMMAND_ERROR);
@@ -119,8 +148,12 @@ public class TextMessageHandler {
             return Collections.singletonList(new BotApiMethodContainer(sendMessage));
     }
 
-    //Возвращает метод бота для отправки фото
     public SendPhoto sendPhoto(String chatId, String caption, String path){
+        return sendPhoto(chatId,caption,path, null);
+    }
+
+    //Возвращает метод бота для отправки фото
+    public SendPhoto sendPhoto(String chatId, String caption, String path, InlineKeyboardMarkup replyKeyboardMarkup){
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
         sendPhoto.setCaption(caption);
@@ -135,7 +168,8 @@ public class TextMessageHandler {
         InputFile photo = new InputFile();//new InputFile("https://upload.wikimedia.org/wikipedia/en/0/05/Hello_kitty_character_portrait.png ");
         photo.setMedia(inputStream,filename);
         sendPhoto.setPhoto(photo);
-        //sendPhoto.setReplyMarkup(inlineKeyboardMaker.getGradeKeyboard());
+        if(replyKeyboardMarkup != null) sendPhoto.setReplyMarkup(replyKeyboardMarkup);
+        //sendPhoto.setReplyMarkup(inlineKeyboardMaker.gradeKeyboard());
         return sendPhoto;
     }
 }

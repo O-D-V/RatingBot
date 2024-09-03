@@ -43,6 +43,7 @@ import java.util.Objects;
 * */
 
 //TODO Добавить возможность создания оценок
+//TODO
 
 @Component
 public class MainHandler extends TelegramLongPollingBot {
@@ -134,7 +135,7 @@ public class MainHandler extends TelegramLongPollingBot {
     }
 
     private User authenticateUser(Update update){
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = update.hasMessage()? update.getMessage().getChatId(): Long.valueOf(update.getCallbackQuery().getId());
         User user = userPhotoGradeService.getUserByID(chatId);
         if (user == null) {
             user = saveNewUser(update);
