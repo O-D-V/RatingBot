@@ -42,8 +42,9 @@ import java.util.Objects;
 * -проверяем заполнен ли временный объект для добавления в БД
 * */
 
-//TODO Добавить возможность создания оценок
-//TODO
+//TODO Добавить админа
+//TODO Добавить запуск цикла оценки фото после /start
+//TODO Добавить кнопки для админа
 
 @Component
 public class MainHandler extends TelegramLongPollingBot {
@@ -76,14 +77,12 @@ public class MainHandler extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        String currency = "";
-        Long chatId = update.getMessage().getChatId();
 
-        logger.debug("receive message from " + chatId + ":" + (update.getMessage().hasText()?update.getMessage().getText():"Not a text"));
-        //TODO Добавить чтобы тут получался юзер и поставлялся в остальные методы. Чтобы не обращаться каждый раз к БД
+
 
         //Authentication user
         User user = authenticateUser(update);
+        logger.debug("receive message from " + user.getUserID() + ":" + ((update.hasMessage() && update.getMessage().hasText())?update.getMessage().getText():"Not a text"));
 
         if(update.hasMessage()){
             if(update.getMessage().hasText()) {
@@ -135,7 +134,7 @@ public class MainHandler extends TelegramLongPollingBot {
     }
 
     private User authenticateUser(Update update){
-        Long chatId = update.hasMessage()? update.getMessage().getChatId(): Long.valueOf(update.getCallbackQuery().getId());
+        Long chatId = update.hasMessage()? update.getMessage().getChatId(): update.getCallbackQuery().getFrom().getId();
         User user = userPhotoGradeService.getUserByID(chatId);
         if (user == null) {
             user = saveNewUser(update);
@@ -146,8 +145,13 @@ public class MainHandler extends TelegramLongPollingBot {
     private User saveNewUser(Update update){
         User user = new User();
         user.setAdmin(false);
-        user.setName(update.getMessage().getChat().getFirstName());
-        user.setUserID(update.getMessage().getChatId());
+        if(update.hasMessage()) {
+            user.setName(update.getMessage().getChat().getFirstName());
+            user.setUserID(update.getMessage().getChatId());
+        }else if(update.hasCallbackQuery()){
+            user.setName(update.getCallbackQuery().getFrom().getFirstName());
+            user.setUserID(update.getCallbackQuery().getFrom().getId());
+        }
         userPhotoGradeService.saveUser(user);
         return user;
     }

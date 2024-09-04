@@ -28,10 +28,7 @@ public class UserPhotoGradeService {
 
     @Transactional
     public void saveGrade(Grade grade){
-        System.out.println("До save");
-        System.out.println(grade);
         gradeRepository.save(grade);
-        System.out.println("После save");
         refreshAveragePhotoRate(Math.toIntExact(grade.getPk().getPhoto().getId()));
     }
 
@@ -82,12 +79,12 @@ public class UserPhotoGradeService {
         return photoRepository.findByName(name).orElse(null);
     }
 
-    public Photo getRandomUnratedPhotoForUser(int userId){
+    public Photo getRandomUnratedPhotoForUser(int userId) throws IndexOutOfBoundsException{
         List<Integer> list =  photoRepository.getUnratedPhotosIdsForUser(userId);
         int minValue = 0;
-        int maxValue = list.size();
+        int maxValue = list.size() - 1;
+        if(maxValue < 0) throw new IndexOutOfBoundsException();
         int randomId = minValue + (int) (Math.random() * (maxValue - minValue + 1));
-
         Photo photoToRate = photoRepository.findById(list.get(randomId)).get();
         return photoToRate;
     }

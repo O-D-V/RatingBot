@@ -13,13 +13,13 @@ public class InlineKeyboardMaker {
     public InlineKeyboardMaker() {
     }
 
-    public InlineKeyboardMarkup gradeKeyboard() {
+    public InlineKeyboardMarkup gradeKeyboard(String photoCapture) {
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
         List<InlineKeyboardButton> keyboardButtonsRow1 = new ArrayList<>();
         for(int i = 1; i < 6; i++) {
             keyboardButtonsRow1.add(getButton(
-                    ""+i,
-                    "/" + i
+                    "" + i,
+                    "/" + photoCapture + ":" + i
             ));
         }
         rowList.add(keyboardButtonsRow1);
@@ -28,7 +28,7 @@ public class InlineKeyboardMaker {
         for(int i = 6; i < 11; i++) {
             keyboardButtonsRow2.add(getButton(
                     ""+i,
-                    "/" + i
+                    "/" + photoCapture + ":" + i
             ));
         }
         rowList.add(keyboardButtonsRow2);

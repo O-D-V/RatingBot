@@ -1,5 +1,6 @@
 package ru.AliceTelegramBot.handlers;
 
+import jakarta.persistence.Index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,8 +81,13 @@ public class TextMessageHandler {
             }
             case "/ratePhoto":
             {
-                Photo photo = userPhotoGradeService.getRandomUnratedPhotoForUser(user.getUserID().intValue());
-                return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getName(), photo.getUrl(), inlineKeyboardMaker.gradeKeyboard())));
+                Photo photo = null;
+                try {
+                    photo = userPhotoGradeService.getRandomUnratedPhotoForUser(user.getUserID().intValue());
+                }catch (IndexOutOfBoundsException e){
+                    return sendMessage(chatId.toString(), "Нет больше фото для оценки");
+                }
+                return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getName(), photo.getUrl(), inlineKeyboardMaker.gradeKeyboard(photo.getName()))));
             }
             default:
                 switch (user.getLastMessage()) {
