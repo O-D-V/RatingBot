@@ -1,5 +1,6 @@
 package ru.AliceTelegramBot.repositories;
 
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,9 @@ public interface PhotoRepository extends JpaRepository<Photo, Integer> {
     List<Integer> getUnratedPhotosIdsForUser(int userId);
 
     Optional<Photo> findById(int id);
+
+    List<Photo> findTop5ByOrderByAverageRateDesc();
+
 
     Optional<Photo> findByName(String name);
 }

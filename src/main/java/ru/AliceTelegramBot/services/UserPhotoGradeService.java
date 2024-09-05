@@ -93,6 +93,10 @@ public class UserPhotoGradeService {
         return  userRepository.findByUserID(id).orElse(null).getLastMessage();
     }
 
+    public List<Photo> getTopFiveByRate(){
+        return photoRepository.findTop5ByOrderByAverageRateDesc();
+    }
+
     public Long countPhotos(){
         return photoRepository.count();
     }

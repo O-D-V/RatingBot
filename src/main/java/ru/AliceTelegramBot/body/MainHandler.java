@@ -57,7 +57,11 @@ public class MainHandler extends TelegramLongPollingBot {
 
 
     @Autowired
-    public MainHandler(BotConfig botConfig, CallbackQueryHandler callbackQueryHandler, TextMessageHandler textMessageHandler, UserPhotoGradeService userPhotoGradeService, TempUserData tempUserData){
+    public MainHandler(BotConfig botConfig,
+                       CallbackQueryHandler callbackQueryHandler,
+                       TextMessageHandler textMessageHandler,
+                       UserPhotoGradeService userPhotoGradeService,
+                       TempUserData tempUserData){
         this.botConfig = botConfig;
         this.callbackQueryHandler = callbackQueryHandler;
         this.textMessageHandler = textMessageHandler;
@@ -83,6 +87,8 @@ public class MainHandler extends TelegramLongPollingBot {
         //Authentication user
         User user = authenticateUser(update);
         logger.debug("receive message from " + user.getUserID() + ":" + ((update.hasMessage() && update.getMessage().hasText())?update.getMessage().getText():"Not a text"));
+
+        if(user.isAdmin())
 
         if(update.hasMessage()){
             if(update.getMessage().hasText()) {

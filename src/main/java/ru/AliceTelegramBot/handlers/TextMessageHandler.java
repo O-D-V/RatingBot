@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,6 +89,13 @@ public class TextMessageHandler {
                     return sendMessage(chatId.toString(), "Нет больше фото для оценки");
                 }
                 return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getName(), photo.getUrl(), inlineKeyboardMaker.gradeKeyboard(photo.getName()))));
+            }
+            case "/topFivePhotos":
+            {
+                List<Photo> photos = userPhotoGradeService.getTopFiveByRate();
+                List<BotApiMethodContainer> methods = new ArrayList<>();
+                for (Photo photo:photos) methods.add(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getAverageRate()+" "+photo.getName(), photo.getUrl())));
+                return methods;
             }
             default:
                 switch (user.getLastMessage()) {
