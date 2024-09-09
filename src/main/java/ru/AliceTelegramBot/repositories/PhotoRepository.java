@@ -22,6 +22,5 @@ public interface PhotoRepository extends JpaRepository<Photo, Integer> {
 
     List<Photo> findTop5ByOrderByAverageRateDesc();
 
-
     Optional<Photo> findByName(String name);
 }

@@ -14,22 +14,30 @@ public class ReplyKeyboardMaker {
     public ReplyKeyboardMaker() {
     }
 
-    public ReplyKeyboardMarkup getMainMenuKeyboard() {
+    public ReplyKeyboardMarkup getAdminMenu() {
         KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("Я котик чипи чипи"));
-        row1.add(new KeyboardButton("Я котик happy happy"));
+        row1.add(new KeyboardButton("Добавить админа"));
+        row1.add(new KeyboardButton("Удалить админа"));
 
         KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("Я ГУЛЬ"));
-        row2.add(new KeyboardButton("Я человек"));
+        row2.add(new KeyboardButton("Добавить фото"));
+        row2.add(new KeyboardButton("Удалить фото"));
 
         KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("Календарь"));
+        row3.add(new KeyboardButton("Список админов"));
+
+        KeyboardRow row4 = new KeyboardRow();
+        row3.add(new KeyboardButton("Список фото"));
+
+        KeyboardRow row5 = new KeyboardRow();
+        row3.add(new KeyboardButton("Меню пользователя"));
 
         List<KeyboardRow> keyboard = new ArrayList<>();
         keyboard.add(row1);
         keyboard.add(row2);
         keyboard.add(row3);
+        keyboard.add(row4);
+        keyboard.add(row5);
 
         final ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setKeyboard(keyboard);
@@ -40,25 +48,18 @@ public class ReplyKeyboardMaker {
         return replyKeyboardMarkup;
     }
 
-    public ReplyKeyboardMarkup getCalendarMainMenuKeyboard() {
+    public ReplyKeyboardMarkup getUserMenu() {
         KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("Создать событие"));
+        row1.add(new KeyboardButton("Оценить фото"));
 
         KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("Все события"));
+        row2.add(new KeyboardButton("Топ 5"));
 
-        KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("События сегодня"));
-        row3.add(new KeyboardButton("События завтра"));
 
-        KeyboardRow row4 = new KeyboardRow();
-        row4.add(new KeyboardButton("Найти по описанию"));
-        row4.add(new KeyboardButton("Найти по дате"));
         List<KeyboardRow> keyboard = new ArrayList<>();
         keyboard.add(row1);
         keyboard.add(row2);
-        keyboard.add(row3);
-        keyboard.add(row4);
+
         final ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setKeyboard(keyboard);
         replyKeyboardMarkup.setSelective(true);

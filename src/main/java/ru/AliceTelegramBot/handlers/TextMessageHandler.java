@@ -1,6 +1,5 @@
 package ru.AliceTelegramBot.handlers;
 
-import jakarta.persistence.Index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +10,8 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import ru.AliceTelegramBot.body.MainHandler;
 import ru.AliceTelegramBot.keyboards.InlineKeyboardMaker;
+import ru.AliceTelegramBot.keyboards.ReplyKeyboardMaker;
 import ru.AliceTelegramBot.models.Photo;
 import ru.AliceTelegramBot.models.User;
 import ru.AliceTelegramBot.services.UserPhotoGradeService;
@@ -51,84 +50,31 @@ public class TextMessageHandler {
             case "/start":
                 return startCommandReceived(chatId.toString(), update.getMessage().getChat().getFirstName());
             case "/helloKitty":
-               return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), "Photo", "photo//HelloKitty.jpg")));
-
-            case "/newPhoto": {
-                //Запрос на создание нового фото
-                user.setLastMessage("/newPhoto");
-                userPhotoGradeService.updateUser(chatId, user);
-                return sendMessage(chatId.toString(), "Запрос принят. Отправьте подпись к фото");
-            }
-            case "/showPhoto": {
-                //отправляет фото по подписи
-                user.setLastMessage("/showPhoto");
-                userPhotoGradeService.updateUser(chatId, user);
-                return  sendMessage(chatId.toString(), "Введите подпись");
-            }
-            case "/showPhotoNames":
-            {
-                //отправляет в ответе список подписей фото
-                StringBuilder res = new StringBuilder();
-                List<String> list = userPhotoGradeService.getPhotosNames();
-                for(String l:list) res.append(l).append("\n");
-                if(res.isEmpty()) res.append("Ничего не найдено");
-                return sendMessage(chatId.toString(), res.toString());
-            }
-            case "/createRate":
-            {
-                user.setLastMessage("/createRate");
-                userPhotoGradeService.updateUser(chatId, user);
-                return  sendMessage(chatId.toString(), "Введите подпись к фото, которое хотели бы оценить и оценку через пробел");
-            }
-            case "/ratePhoto":
-            {
+                return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), "Photo", "photo//HelloKitty.jpg")));
+            case "Оценить фото":
+            case "/ratePhoto": {
                 Photo photo = null;
                 try {
                     photo = userPhotoGradeService.getRandomUnratedPhotoForUser(user.getUserID().intValue());
-                }catch (IndexOutOfBoundsException e){
+                } catch (IndexOutOfBoundsException e) {
                     return sendMessage(chatId.toString(), "Нет больше фото для оценки");
                 }
                 return Collections.singletonList(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getName(), photo.getUrl(), inlineKeyboardMaker.gradeKeyboard(photo.getName()))));
             }
-            case "/topFivePhotos":
-            {
+            case "Топ 5":
+            case "/topFivePhotos": {
                 List<Photo> photos = userPhotoGradeService.getTopFiveByRate();
                 List<BotApiMethodContainer> methods = new ArrayList<>();
-                for (Photo photo:photos) methods.add(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getAverageRate()+" "+photo.getName(), photo.getUrl())));
+                for (Photo photo : photos)
+                    methods.add(new BotApiMethodContainer(sendPhoto(chatId.toString(), photo.getAverageRate() + "★" + " - " + photo.getName(), photo.getUrl())));
                 return methods;
             }
-            default:
-                switch (user.getLastMessage()) {
-                    case "/newPhoto": {
-                        //Обрабатывается подпись к новому фото.
-                        savePhotoName(chatId.toString(), messageText);
-                        logger.debug("Title is saved");
-                        return sendMessage(chatId.toString(), "Отправьте фото");
-
-                    }
-                    case "/showPhoto": {
-                        //Возвращает пользователю фото с отправленной ранее подписью
-                        Photo photo = userPhotoGradeService.getPhotoByName(messageText);
-                        if (photo == null) return sendMessage(chatId.toString(), "Нет фото с такой подписью");
-                        return Collections.singletonList(new BotApiMethodContainer(sendPhoto(Long.toString(chatId), photo.getName(), photo.getUrl())));
-                    }
-                    case "/createRate": {
-                        String cleanMessageText = messageText.trim();
-
-                        String photoName = cleanMessageText.substring(0, cleanMessageText.indexOf(' '));
-                        String photoGrade = cleanMessageText.substring(cleanMessageText.indexOf(' ') + 1);
-
-                        Photo photo = userPhotoGradeService.getPhotoByName(photoName);
-
-                        //TODO Сделать проверку на наличие оценки
-
-                        userPhotoGradeService.saveGrade(photo, user, Integer.parseInt(photoGrade));
-                        return sendMessage(chatId.toString(), "Выполнено");
-                    }
-                }
-
-                return  sendMessage(chatId.toString(), Constants.NO_SUCH_COMMAND_ERROR);
+            case "/id": {
+                return sendMessage(chatId.toString(), chatId + " - ваш ID.");
+            }
         }
+                return  sendMessage(chatId.toString(), Constants.NO_SUCH_COMMAND_ERROR);
+
         //return  sendMessage(chatId.toString(), Constants.SUCCESS_MESSAGE);
     }
 
@@ -151,7 +97,8 @@ public class TextMessageHandler {
     //Обрабатывает команду /start
     private List<BotApiMethodContainer> startCommandReceived(String chatId, String name) {
         String answer = Constants.getWelcomeMessage(name);
-        return sendMessage(chatId, answer);
+        ReplyKeyboardMaker replyKeyboardMaker = new ReplyKeyboardMaker();
+        return sendMessage(chatId, answer, replyKeyboardMaker.getUserMenu());
     }
 
     //Возвращает метод бота для отправки текстового сообщения
@@ -160,6 +107,14 @@ public class TextMessageHandler {
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(textToSend);
             return Collections.singletonList(new BotApiMethodContainer(sendMessage));
+    }
+
+    private List<BotApiMethodContainer> sendMessage(String chatId, String textToSend, ReplyKeyboardMarkup replyKeyboardMarkup){
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText(textToSend);
+        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+        return Collections.singletonList(new BotApiMethodContainer(sendMessage));
     }
 
     public SendPhoto sendPhoto(String chatId, String caption, String path){

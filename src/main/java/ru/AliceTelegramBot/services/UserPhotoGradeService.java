@@ -11,6 +11,7 @@ import ru.AliceTelegramBot.repositories.PhotoRepository;
 import ru.AliceTelegramBot.repositories.UserRepository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @Transactional(readOnly = true)
@@ -77,6 +78,16 @@ public class UserPhotoGradeService {
 
     public Photo getPhotoByName(String name){
         return photoRepository.findByName(name).orElse(null);
+    }
+
+    public List<User> getAllAdmins(){
+        return userRepository.findAllByIsAdminTrue();
+    }
+
+    @Transactional
+    public void deletePhotoByCapture(String capture) throws NoSuchElementException{
+        Photo photo = photoRepository.findByName(capture).orElseThrow();
+        photoRepository.delete(photo);
     }
 
     public Photo getRandomUnratedPhotoForUser(int userId) throws IndexOutOfBoundsException{

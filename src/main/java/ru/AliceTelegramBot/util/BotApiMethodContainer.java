@@ -36,6 +36,9 @@ public class BotApiMethodContainer {
         return false;
     }
 
+    public boolean isContainerEmpty(){
+        return (sendPhoto == null) && (method == null);
+    }
 
     public void setMethod(BotApiMethod<?> method){
         this.method = method;

@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.AliceTelegramBot.config.BotConfig;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import ru.AliceTelegramBot.handlers.AdminCommandsHandler;
 import ru.AliceTelegramBot.handlers.CallbackQueryHandler;
 import ru.AliceTelegramBot.handlers.TextMessageHandler;
 import ru.AliceTelegramBot.models.Photo;
@@ -53,6 +54,7 @@ public class MainHandler extends TelegramLongPollingBot {
     private final TextMessageHandler textMessageHandler;
     private final UserPhotoGradeService userPhotoGradeService;
     private final TempUserData tempUserData;
+    private final AdminCommandsHandler adminCommandsHandler;
     Logger logger = LoggerFactory.getLogger(MainHandler.class);
 
 
@@ -61,12 +63,14 @@ public class MainHandler extends TelegramLongPollingBot {
                        CallbackQueryHandler callbackQueryHandler,
                        TextMessageHandler textMessageHandler,
                        UserPhotoGradeService userPhotoGradeService,
-                       TempUserData tempUserData){
+                       TempUserData tempUserData,
+                       AdminCommandsHandler adminCommandsHandler){
         this.botConfig = botConfig;
         this.callbackQueryHandler = callbackQueryHandler;
         this.textMessageHandler = textMessageHandler;
         this.userPhotoGradeService = userPhotoGradeService;
         this.tempUserData = tempUserData;
+        this.adminCommandsHandler = adminCommandsHandler;
     }
 
     @Override
@@ -88,33 +92,58 @@ public class MainHandler extends TelegramLongPollingBot {
         User user = authenticateUser(update);
         logger.debug("receive message from " + user.getUserID() + ":" + ((update.hasMessage() && update.getMessage().hasText())?update.getMessage().getText():"Not a text"));
 
-        if(user.isAdmin())
+        if(user.isAdmin() ){
+            logger.info("Admin message");
 
-        if(update.hasMessage()){
-            if(update.getMessage().hasText()) {
-                List<BotApiMethodContainer> methods = textMessageHandler.processTextMessage(update, user);
-                for(BotApiMethodContainer botMethodContainer : methods) {
+            if(update.hasMessage()) {
+                if (update.getMessage().hasText()) {
+                    List<BotApiMethodContainer> methodsList = null;
                     try {
-                        if(botMethodContainer.isSendPhotoMethod()) execute(botMethodContainer.getSendPhotoMethod());
+                        methodsList = adminCommandsHandler.handle(update, user);
+                        for (BotApiMethodContainer botMethodContainer : methodsList) {
+                            try {
+                                if (botMethodContainer.isContainerEmpty()) continue;
+                                if (botMethodContainer.isSendPhotoMethod())
+                                    execute(botMethodContainer.getSendPhotoMethod());
+                                else execute(botMethodContainer.getOtherMethod());
+                                return;
+                            } catch (TelegramApiException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    } catch (NoSuchMethodException e) {
+                    }
+                }
+                if (update.getMessage().hasPhoto()) {
+                    handlePhoto(update, user);
+                }
+            }
+        }
+
+        if(update.hasMessage()) {
+            if (update.getMessage().hasText()) {
+                List<BotApiMethodContainer> methods = textMessageHandler.processTextMessage(update, user);
+                for (BotApiMethodContainer botMethodContainer : methods) {
+                    try {
+                        if (botMethodContainer.isSendPhotoMethod()) execute(botMethodContainer.getSendPhotoMethod());
                         else execute(botMethodContainer.getOtherMethod());
                     } catch (TelegramApiException e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
-            if(update.getMessage().hasPhoto()){
-                handlePhoto(update, user);
-            }
-        }else if(update.hasCallbackQuery()){
-            List<BotApiMethod<?>> methodsList =  callbackQueryHandler.processCallbackQuery(update.getCallbackQuery(), user);
-            for(BotApiMethod<?> method : methodsList) {
-                try {
-                    execute(method);
-                } catch (TelegramApiException e) {
-                    throw new RuntimeException(e);
+        }
+            else if(update.hasCallbackQuery()){
+                List<BotApiMethod<?>> methodsList =  callbackQueryHandler.processCallbackQuery(update.getCallbackQuery(), user);
+                for(BotApiMethod<?> method : methodsList) {
+                    try {
+                        execute(method);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
-        }
+
     }
 
     private void savePhoto(Long userID){
